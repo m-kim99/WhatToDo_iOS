@@ -10,6 +10,7 @@ struct RepeatCalendarView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var displayMonth: Date
+    @State private var selectedDates: Set<Date> = []
     @State private var dragStart: Date? = nil
     @State private var dragEnd: Date? = nil
     @State private var gridWidth: CGFloat = 300
@@ -21,8 +22,8 @@ struct RepeatCalendarView: View {
         self._displayMonth = State(initialValue: Calendar.current.startOfDay(for: Date()))
     }
 
-    // 드래그 범위에 포함된 날짜들
-    private var selectedDates: Set<Date> {
+    // 현재 드래그 중인 날짜 범위
+    private var dragRange: Set<Date> {
         guard let s = dragStart, let e = dragEnd else { return [] }
         let (early, late) = s <= e ? (s, e) : (e, s)
         var result = Set<Date>()
@@ -32,6 +33,11 @@ struct RepeatCalendarView: View {
             cur = calendar.date(byAdding: .day, value: 1, to: cur) ?? late
         }
         return result
+    }
+
+    // 셀에 표시할 날짜 = 확정 선택 + 현재 드래그 미리보기
+    private var displayDates: Set<Date> {
+        selectedDates.union(dragRange)
     }
 
     private var monthTitle: String {
@@ -44,9 +50,9 @@ struct RepeatCalendarView: View {
     private func changeMonth(_ value: Int) {
         guard let next = calendar.date(byAdding: .month, value: value, to: displayMonth) else { return }
         displayMonth = next
-        // 월 이동 시 선택 초기화
         dragStart = nil
         dragEnd = nil
+        // selectedDates는 월 이동해도 유지 (다른 달 날짜도 선택 가능)
     }
 
     private var orderedDaySymbols: [String] {
@@ -74,7 +80,6 @@ struct RepeatCalendarView: View {
         return days
     }
 
-    // 드래그 위치 → 날짜
     private func date(at location: CGPoint, in days: [Date?]) -> Date? {
         let cellW = gridWidth / 7
         guard cellW > 0 else { return nil }
@@ -87,8 +92,7 @@ struct RepeatCalendarView: View {
 
     private func duplicate() {
         for date in selectedDates {
-            let newItem = TodoItem(title: sourceItem.title, date: date, lineIndex: sourceItem.lineIndex)
-            modelContext.insert(newItem)
+            modelContext.insert(TodoItem(title: sourceItem.title, date: date, lineIndex: sourceItem.lineIndex))
         }
         try? modelContext.save()
         dismiss()
@@ -96,7 +100,7 @@ struct RepeatCalendarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 안내
+            // 안내 헤더
             VStack(spacing: 4) {
                 Text("Repeat task on selected dates")
                     .font(.subheadline)
@@ -109,7 +113,7 @@ struct RepeatCalendarView: View {
 
             Divider()
 
-            // 월 이동 헤더
+            // 월 이동
             HStack {
                 Button { changeMonth(-1) } label: {
                     Image(systemName: "chevron.left")
@@ -145,7 +149,7 @@ struct RepeatCalendarView: View {
 
             Divider()
 
-            // 날짜 그리드 + 드래그 제스처
+            // 날짜 그리드
             let days = calendarDays
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7),
@@ -155,7 +159,7 @@ struct RepeatCalendarView: View {
                     if let date {
                         RepeatDayCell(
                             date: date,
-                            isSelected: selectedDates.contains(date),
+                            isSelected: displayDates.contains(date),
                             isToday: calendar.isDateInToday(date),
                             isSource: calendar.isDate(date, inSameDayAs: sourceItem.date)
                         )
@@ -178,29 +182,51 @@ struct RepeatCalendarView: View {
                         }
                     }
                     .onEnded { _ in
-                        guard !selectedDates.isEmpty else { return }
-                        duplicate()
+                        if dragStart == dragEnd, let d = dragStart {
+                            // 탭: 개별 날짜 토글
+                            if selectedDates.contains(d) {
+                                selectedDates.remove(d)
+                            } else {
+                                selectedDates.insert(d)
+                            }
+                        } else {
+                            // 드래그: 범위를 기존 선택에 추가
+                            selectedDates.formUnion(dragRange)
+                        }
+                        dragStart = nil
+                        dragEnd = nil
                     }
             )
             .padding(.horizontal, 4)
 
-            // 선택 현황
-            Group {
+            // 선택 현황 + 완료 버튼
+            VStack(spacing: 12) {
                 if selectedDates.isEmpty {
-                    Text("Drag across dates to repeat")
+                    Text("Drag to select a range · Tap to toggle a date")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 } else {
-                    Text("Repeating on \(selectedDates.count) day(s)")
+                    Text("\(selectedDates.count) day(s) selected")
+                        .font(.subheadline)
                         .foregroundColor(.blue)
                 }
-            }
-            .font(.subheadline)
-            .padding(.top, 14)
 
-            Spacer()
+                Button(action: duplicate) {
+                    Text("Repeat")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(selectedDates.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                        .foregroundColor(selectedDates.isEmpty ? .secondary : .white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .disabled(selectedDates.isEmpty)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 32)
         }
         .background(paperColor)
-        .interactiveDismissDisabled(!selectedDates.isEmpty)
     }
 }
 
@@ -217,7 +243,6 @@ private struct RepeatDayCell: View {
     var body: some View {
         ZStack {
             if isSelected {
-                // 사용자가 말한 "네모칸으로 배경색 칠해진" 형태
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.blue.opacity(0.25))
                     .padding(.horizontal, 2)
@@ -236,7 +261,7 @@ private struct RepeatDayCell: View {
 
             Text("\(day)")
                 .font(.system(size: 15))
-                .fontWeight(isToday || isSelected || isSource ? .semibold : .regular)
+                .fontWeight(isSelected || isSource || isToday ? .semibold : .regular)
                 .foregroundColor(
                     weekday == 1 ? .red :
                     weekday == 7 ? .blue :

@@ -11,6 +11,7 @@
 		3B488E1AF300EA5D32CF0EA8 /* WhatToDoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADF8C8FD390268745F96F44 /* WhatToDoApp.swift */; };
 		5123D5543A68584E6029D909 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF6D3AE0A1F78F7FCB0A001 /* ContentView.swift */; };
 		5E675B958C6DDE2929449542 /* TodoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58FBAB7926CB0DA8F346D757 /* TodoItem.swift */; };
+		A2BDA4AD6A4D4CEEDD57F5E5 /* RepeatCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADF8BC4C76657B061336ECB /* RepeatCalendarView.swift */; };
 		CE62E905E38285548E33B1FF /* NotepadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155336ABD4D14F55E1104EBD /* NotepadView.swift */; };
 /* End PBXBuildFile section */
 
@@ -18,6 +19,7 @@
 		0ADF8C8FD390268745F96F44 /* WhatToDoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatToDoApp.swift; sourceTree = "<group>"; };
 		155336ABD4D14F55E1104EBD /* NotepadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotepadView.swift; sourceTree = "<group>"; };
 		34D5F903ECDEC8EE4A48CA4E /* WhatToDo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WhatToDo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4ADF8BC4C76657B061336ECB /* RepeatCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepeatCalendarView.swift; sourceTree = "<group>"; };
 		58FBAB7926CB0DA8F346D757 /* TodoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoItem.swift; sourceTree = "<group>"; };
 		80A569DEEC1813704051C00D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9DF6D3AE0A1F78F7FCB0A001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -38,6 +40,7 @@
 			children = (
 				C6A297E2E2B81B4AD87158D5 /* CalendarView.swift */,
 				155336ABD4D14F55E1104EBD /* NotepadView.swift */,
+				4ADF8BC4C76657B061336ECB /* RepeatCalendarView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -128,6 +131,7 @@
 				048AF8A9022BDB5E9905A05D /* CalendarView.swift in Sources */,
 				5123D5543A68584E6029D909 /* ContentView.swift in Sources */,
 				CE62E905E38285548E33B1FF /* NotepadView.swift in Sources */,
+				A2BDA4AD6A4D4CEEDD57F5E5 /* RepeatCalendarView.swift in Sources */,
 				5E675B958C6DDE2929449542 /* TodoItem.swift in Sources */,
 				3B488E1AF300EA5D32CF0EA8 /* WhatToDoApp.swift in Sources */,
 			);

@@ -12,6 +12,7 @@ struct NotepadView: View {
 
     let date: Date
     @State private var texts: [Int: String] = [:]
+    @State private var repeatItem: TodoItem?
 
     init(date: Date) {
         self.date = date
@@ -57,6 +58,9 @@ struct NotepadView: View {
                         onToggle: {
                             existing?.isCompleted.toggle()
                             try? modelContext.save()
+                        },
+                        onLongPress: {
+                            repeatItem = item(at: index)
                         }
                     )
                 }
@@ -64,6 +68,9 @@ struct NotepadView: View {
             .padding(.bottom, 60)
         }
         .background(paperColor)
+        .sheet(item: $repeatItem) { item in
+            RepeatCalendarView(sourceItem: item)
+        }
     }
 }
 
@@ -72,12 +79,14 @@ struct NotepadLine: View {
     let isCompleted: Bool
     let onSave: () -> Void
     let onToggle: () -> Void
+    let onLongPress: () -> Void
 
     @FocusState private var isFocused: Bool
+    @State private var isEditing = false
 
     var body: some View {
         HStack(spacing: 0) {
-            // 체크박스 (좌측 여백)
+            // 체크박스
             Button(action: onToggle) {
                 RoundedRectangle(cornerRadius: 3)
                     .stroke(Color.gray.opacity(0.45), lineWidth: 1.5)
@@ -92,31 +101,40 @@ struct NotepadLine: View {
             }
             .buttonStyle(.plain)
             .frame(width: 50)
+            .opacity(text.isEmpty ? 0.3 : 1)
 
             // 빨간 여백선
             Rectangle()
                 .fill(marginColor)
                 .frame(width: 1.5)
 
-            // 텍스트 입력
+            // 텍스트 영역 — 더블탭으로 편집 진입
             ZStack(alignment: .leading) {
                 TextField("", text: $text)
                     .font(.system(size: 15))
                     .foregroundColor(isCompleted ? Color.primary.opacity(0.35) : .primary)
                     .padding(.horizontal, 10)
                     .focused($isFocused)
+                    .disabled(!isEditing)
                     .submitLabel(.done)
                     .onChange(of: isFocused) { _, focused in
-                        if !focused { onSave() }
+                        if !focused {
+                            isEditing = false
+                            onSave()
+                        }
                     }
 
-                // 취소선 오버레이
-                if isCompleted {
+                if isCompleted && !text.isEmpty {
                     Rectangle()
                         .fill(Color.primary.opacity(0.4))
                         .frame(height: 1)
                         .padding(.horizontal, 10)
                 }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                isEditing = true
+                isFocused = true
             }
         }
         .frame(height: 44)
@@ -126,5 +144,12 @@ struct NotepadLine: View {
                 .fill(lineColor)
                 .frame(height: 1)
         }
+        // 롱프레스 — 내용 있는 줄만 반응
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5).onEnded { _ in
+                guard !text.isEmpty else { return }
+                onLongPress()
+            }
+        )
     }
 }
